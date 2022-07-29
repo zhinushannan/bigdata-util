@@ -1,4 +1,4 @@
-package club.kwcoder.util.common;
+package io.github.zhinushannan.util.common;
 
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;

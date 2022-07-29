@@ -1,7 +1,7 @@
-package club.kwcoder.util.hbase;
+package io.github.zhinushannan.util.hbase;
 
-import club.kwcoder.constant.ConvertConst;
-import club.kwcoder.util.common.FieldClassUtils;
+import io.github.zhinushannan.constant.ConvertConst;
+import io.github.zhinushannan.util.common.FieldClassUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;

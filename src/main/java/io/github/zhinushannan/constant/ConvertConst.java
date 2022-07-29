@@ -1,4 +1,4 @@
-package club.kwcoder.constant;
+package io.github.zhinushannan.constant;
 
 import java.util.HashMap;
 import java.util.Map;

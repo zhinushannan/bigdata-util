@@ -1,4 +1,4 @@
-package club.kwcoder;
+package io.github.zhinushannan;
 
 import static org.junit.Assert.assertTrue;
 

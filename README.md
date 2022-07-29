@@ -27,7 +27,7 @@
     <dependency>
       <groupId>io.github.zhinushannan</groupId>
       <artifactId>bigdata-util</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>0.0.1-RELEASE</version>
     </dependency>
 ```
 

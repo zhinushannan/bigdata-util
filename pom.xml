@@ -6,7 +6,7 @@
 
     <groupId>io.github.zhinushannan</groupId>
     <artifactId>bigdata-util</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.0.1-RELEASE</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>bigdata util</description>
@@ -20,6 +20,7 @@
         <hbase.version>2.4.8</hbase.version>
         <repo.url>https://github.com/zhinushannan/bigdata-util</repo.url>
         <repo.https.url>https://github.com/zhinushannan/bigdata-util.git</repo.https.url>
+        <java.home>/Library/Java/JavaVirtualMachines/jdk1.8.0_333.jdk/Contents/Home</java.home>
     </properties>
 
     <dependencies>
@@ -86,6 +87,7 @@
             <email>zhinushannan@gmail.com</email>
             <organization>github</organization>
             <organizationUrl>https://github.com/zhinushannan</organizationUrl>
+            <timezone>+8</timezone>
         </developer>
     </developers>
 
@@ -129,7 +131,7 @@
                     <execution>
                         <id>attach-sources</id>
                         <goals>
-<!--                            <goal>jar-no-fork</goal>-->
+                            <goal>jar-no-fork</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -137,12 +139,15 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+                </configuration>
                 <version>2.9.1</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
                         <goals>
-<!--                            <goal>jar</goal>-->
+                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -156,7 +161,7 @@
                         <id>sign-artifacts</id>
                         <phase>verify</phase>
                         <goals>
-<!--                            <goal>sign</goal>-->
+                            <goal>sign</goal>
                         </goals>
                     </execution>
                 </executions>

@@ -1,0 +1,278 @@
+package club.kwcoder.util.hbase;
+
+import club.kwcoder.constant.ConvertConst;
+import club.kwcoder.util.common.FieldClassUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * 和HBase相关的工具类，包括：
+ * - 配置对象、连接对象、admin对象的获取与关闭
+ * - 命名空间的删除
+ * - 表的删除
+ * - 扫描结果转实体类对象
+ * - 实体类对象转put对象
+ *
+ * @author zhinushannan
+ */
+public class HBaseUtils {
+
+    /**
+     * hbase配置对象
+     */
+    private static Configuration conf = null;
+    /**
+     * hbase连接对象
+     */
+    private static Connection connection = null;
+    /**
+     * hbase admin 对象
+     */
+    private static Admin admin = null;
+
+    /**
+     * 获取hbase配置对象
+     */
+    public static Configuration getConf() {
+        if (null == conf) {
+            conf = HBaseConfiguration.create();
+        }
+        return conf;
+    }
+
+    /**
+     * 获取hbase连接
+     */
+    public static Connection getConnection() throws IOException {
+        if (null == connection) {
+            connection = ConnectionFactory.createConnection(getConf());
+        }
+        return connection;
+    }
+
+    /**
+     * 获取admin对象
+     */
+    public static Admin getAdmin() throws IOException {
+        if (null == admin) {
+            admin = getConnection().getAdmin();
+        }
+        return admin;
+    }
+
+    /**
+     * 如果表存在，则删除
+     */
+    public static void deleteTaleIfExist(TableName tableName) throws IOException {
+        if (getAdmin().tableExists(tableName)) {
+            getAdmin().disableTable(tableName);
+            getAdmin().deleteTable(tableName);
+        }
+    }
+
+    /**
+     * 如果命名空间存在，则删除
+     */
+    public static void deleteNamespaceIfExist(String namespace) throws IOException {
+        List<String> namespaces = Arrays.stream(getAdmin().listNamespaces()).collect(Collectors.toList());
+        if (namespaces.contains(namespace)) {
+            TableName[] tableNames = getAdmin().listTableNamesByNamespace(namespace);
+            for (TableName tableName : tableNames) {
+                deleteTaleIfExist(tableName);
+            }
+            getAdmin().deleteNamespace(namespace);
+        }
+    }
+
+    /**
+     * 打印扫描结果
+     *
+     * @param cls     扫描结果的值的类型
+     * @param results 扫描结果集
+     * @param family  列簇
+     */
+    public static <T> void show(Class<T> cls, ResultScanner results, byte[] family) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException {
+        StringBuffer stringBuffer;
+
+        for (Result result : results) {
+            stringBuffer = new StringBuffer();
+
+            Object rowKey = getBytesToMethod(String.class).invoke(null, result.getRow());
+
+            stringBuffer.append("{").append(rowKey).append("----");
+
+            T instance = getInstance(cls, result, family);
+            stringBuffer.append(instance);
+
+            stringBuffer.append("}");
+            System.out.println(stringBuffer);
+        }
+    }
+
+    /**
+     * 根据数据类型获取对应的转换方法，如传入 int.class ，返回的是 Bytes 类中的 toInt(byte[]) 方法
+     *
+     * @param cls 扫描结果的值的类型
+     */
+    public static Method getBytesToMethod(Class<?> cls) throws NoSuchMethodException {
+        cls = ConvertConst.wrapper2primitive.get(cls) == null ? cls : ConvertConst.wrapper2primitive.get(cls);
+        String name = cls.getSimpleName();
+        Class<Bytes> bytesClass = Bytes.class;
+        return bytesClass.getMethod("to" + name.substring(0, 1).toUpperCase() + name.substring(1), byte[].class);
+    }
+
+    /**
+     * 获取hbase读取的值
+     *
+     * @param cls    转换为byte[]之前的数据类型
+     * @param result hbase扫描结果
+     * @param family 列簇
+     * @param col    列
+     * @return 返回结果
+     */
+    public static Object getColVal(Class<?> cls, Result result, byte[] family, byte[] col) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        return getBytesToMethod(cls).invoke(null, result.getValue(family, col));
+    }
+
+    /**
+     * 根据扫描结果Cell得到对象
+     *
+     * @param cls    实体类类型
+     * @param result 扫描结果Cell
+     * @param family 列簇
+     * @return 返回扫描结果Cell对应的对象
+     */
+    public static <T> T getInstance(Class<T> cls, Result result, byte[] family) throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        Map<String, Class<?>> privateFieldClass = FieldClassUtils.getPrivateFieldClass(cls);
+
+        T instance = cls.newInstance();
+
+        Set<Map.Entry<String, Class<?>>> entries = privateFieldClass.entrySet();
+        for (Map.Entry<String, Class<?>> entry : entries) {
+            String fieldName = entry.getKey();
+            Class<?> fieldCls = privateFieldClass.get(fieldName);
+            Object fieldValue = HBaseUtils.getColVal(fieldCls, result, family, Bytes.toBytes(fieldName));
+            getSetMethod(cls, fieldName, fieldCls).invoke(instance, fieldValue);
+        }
+
+        return instance;
+    }
+
+    /**
+     * 根据扫描结果集得到对象列表
+     *
+     * @param cls     实体类类型
+     * @param results 扫描结果集
+     * @param family  列簇
+     * @return 返回扫描结果Cell对应的对象
+     */
+    public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family) throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        List<T> list = new ArrayList<>();
+
+        for (Result result : results) {
+            list.add(getInstance(cls, result, family));
+        }
+
+        return list;
+    }
+
+    /**
+     * 根据实体类对象和列簇构建put对象
+     *
+     * @param row    行键
+     * @param family 列簇
+     * @param t      实体类对象
+     */
+    public static <T> Put getPut(byte[] row, byte[] family, T t) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Put put = new Put(row);
+        Set<Map.Entry<byte[], Class<?>>> entries = FieldClassUtils.getPrivateFieldClassBytesKey(t.getClass()).entrySet();
+        for (Map.Entry<byte[], Class<?>> entry : entries) {
+            Object invoke = getGetMethod(t.getClass(), Bytes.toString(entry.getKey())).invoke(t);
+
+            switch (invoke.getClass().getSimpleName().toLowerCase()) {
+                case "short":
+                    put.addColumn(family, entry.getKey(), Bytes.toBytes((short) invoke));
+                    break;
+                case "integer":
+                case "int":
+                    put.addColumn(family, entry.getKey(), Bytes.toBytes((int) invoke));
+                    break;
+                case "long":
+                    put.addColumn(family, entry.getKey(), Bytes.toBytes((long) invoke));
+                    break;
+                case "double":
+                    put.addColumn(family, entry.getKey(), Bytes.toBytes((double) invoke));
+                    break;
+                case "float":
+                    put.addColumn(family, entry.getKey(), Bytes.toBytes((float) invoke));
+                    break;
+                case "boolean":
+                    put.addColumn(family, entry.getKey(), Bytes.toBytes((boolean) invoke));
+                    break;
+                case "string":
+                    put.addColumn(family, entry.getKey(), Bytes.toBytes((String) invoke));
+                    break;
+            }
+        }
+        return put;
+    }
+
+    /**
+     * 获取类属性的getter方法
+     *
+     * @param cls       类
+     * @param fieldName 属性名称
+     */
+    private static <T> Method getGetMethod(Class<T> cls, String fieldName) throws NoSuchMethodException {
+        return cls.getMethod("get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1));
+    }
+
+    /**
+     * 获取类属性的setter方法
+     *
+     * @param cls       类
+     * @param fieldName 属性名称
+     * @param fieldCls  属性类型
+     */
+    private static <T> Method getSetMethod(Class<T> cls, String fieldName, Class<?> fieldCls) throws NoSuchMethodException {
+        return cls.getMethod("set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1), fieldCls);
+    }
+
+    /**
+     * 关闭admin、connection，清空conf
+     */
+    public static void close() {
+        if (null != admin) {
+            try {
+                admin.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                admin = null;
+            }
+        }
+        if (null != connection) {
+            try {
+                connection.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                connection = null;
+            }
+        }
+        if (null != conf) {
+            conf.clear();
+            conf = null;
+        }
+    }
+
+}

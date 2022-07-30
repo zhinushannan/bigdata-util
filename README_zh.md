@@ -20,6 +20,44 @@
 
 > 提示：本工具已提供`hadoop-common-3.3.2`、`hadoop-client-3.3.2`、`hadoop-hdfs-3.3.2`、`hbase-client-2.4.8`、`hbase-server-2.4.8`、`hbase-mapreduce-2.4.8`依赖，满足基本开发需求，可以不需要手动添加。
 
+# 🧾接口简介
+
+### `HBaseUtils`
+
+- 基础对象
+
+  - `public static Configuration getConf()`：获取HBase配置对象
+
+  - `public static Connection getConnection()`：获取HBase连接对象
+
+  - `public static Admin getAdmin()`：获取HBase Admin对象
+  - `public static void close()`：关闭连接对象和Admin对象
+
+- 命名空间与表的删除
+
+  - `public static void deleteNamespaceIfExist(String namespace)`：如果指定命名空间存在，则删除命名空间
+
+  - `public static void deleteTaleIfExist(TableName tableName)`：如果指定表存在，则删除表
+
+- 值的获取
+
+  - ~~`public static Method getBytesToMethod(Class<?> cls)`~~：根据数据类型获取对应的转换方法，如传入`int.class`，返回的是`Bytes.toInt(byte[])`方法（由于此方法不需要对外暴露，下个版本将设为private）
+
+  - `public static Object getColVal(Class<?> cls, Result result, byte[] family, byte[] col)`：根据数据类型、结果集和列簇中的列名获取对应的值。
+
+  - `public static <T> T getInstance(Class<T> cls, Result result, byte[] family)`：根据扫描结果Cell得到对象（无列名前缀）
+
+  - `public static <T> T getInstance(Class<T> cls, Result result, byte[] family, String colPrefix)`：根据扫描结果Cell得到对象（指定列名前缀，如指定前缀为`test_`，则从表中获取数据转为实体类的过程中将列名的前缀`test_`移除，**注意：列名前缀`null`和`""`不相同！**）
+
+  - `public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family)`：根据扫描结果集ResultScanner获得对象列表（无列名前缀）
+
+  - `public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family, String colPrefix)`：根据扫描结果集ResultScanner获得对象列表（排除指定列名前缀，如指定前缀为`test_`，则从表中获取数据转为实体类的过程中将列名的前缀`test_`移除，**注意：列名前缀`null`和`""`不相同！**）
+
+- `Put`对象的获取
+
+  - `public static <T> Put getPut(byte[] row, byte[] family, T t)`：根据实体类对象和列簇构建put对象（无列名前缀）
+  - `public static <T> Put getPut(byte[] row, byte[] family, T t, String colPrefix)`：根据实体类对象和列簇构建put对象（指定列名前缀，如指定前缀为`test_`，存入表中的列名便拥有前缀`test_`，**注意：列名前缀`null`和`""`不相同！**）
+
 # 🥄使用方法
 
 ### 导入依赖
@@ -510,3 +548,4 @@ public class PersonRead {
 # 更新日志
 
 - 2022/07/29：HBase工具类，版本：0.0.1-SNAPSHOT
+- 2022/07/30：Hbase工具类中根据实体类对象获取Put对象和根据扫描结果集获取实体类对象允许自定义前缀，版本：0.0.2-SNAPSHOT

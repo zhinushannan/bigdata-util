@@ -23,6 +23,42 @@ Features include:
 
 > Tips：This tool has provided `hadoop-common-3.3.2`, `hadoop-client-3.3.2`, `hadoop-hdfs-3.3.2`, `hbase-client-2.4.8`, `hbase-server-2.4.8` , `hbase-mapreduce-2.4.8` dependencies, to meet the basic development needs, you do not need to add manually.
 
+# 🧾Api Docs
+
+### `HBaseUtils`
+
+- Base object
+
+  - `public static Configuration getConf()`：Get HBase configuration object
+  - `public static Connection getConnection()`：Get HBase connection object
+  - `public static Admin getAdmin()`：Get HBase Admin object
+  - `public static void close()`：Close the connection object and the Admin object
+
+- Namespace and table deletion
+
+  - `public static void deleteNamespaceIfExist(String namespace)`：If the specified namespace exists, delete the namespace
+
+  - `public static void deleteTaleIfExist(TableName tableName)`：If the specified table exists, delete the table
+
+- Get value
+
+  - ~~`public static Method getBytesToMethod(Class<?> cls)`~~：Obtain the corresponding conversion method according to the data type, such as passing in `int.class`, and returning the `Bytes.toInt(byte[])` method (because this method does not need to be exposed, the next version will be set to private)
+
+  - `public static Object getColVal(Class<?> cls, Result result, byte[] family, byte[] col)`：Get the corresponding value based on the data type, result set, and column name in the column cluster.
+
+  - `public static <T> T getInstance(Class<T> cls, Result result, byte[] family)`：Get the object according to the scan result Cell (no column name prefix)
+
+  - `public static <T> T getInstance(Class<T> cls, Result result, byte[] family, String colPrefix)`：Obtain the object according to the scan result Cell (specify the prefix of the column name, if the specified prefix is `test_`, the prefix `test_` of the column name will be removed in the process of obtaining the data from the table and converting it to the entity class, **Note: the column name The prefix `null` and `""` are not the same!**)
+
+  - `public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family)`：Obtain a list of objects based on the scan result set ResultScanner (without column name prefix)
+
+  - `public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family, String colPrefix)`：Obtain a list of objects based on the scan result set ResultScanner (excluding the specified column name prefix, if the specified prefix is `test_`, the column name prefix `test_` will be removed in the process of obtaining data from the table and converting it to an entity class, **Note : column name prefixes `null` and `""` are not the same!**)
+
+- Get the `Put` object
+
+  - `public static <T> Put getPut(byte[] row, byte[] family, T t)`：Build put objects from entity class objects and column clusters (without column name prefixes)
+  - `public static <T> Put getPut(byte[] row, byte[] family, T t, String colPrefix)`：Build the put object based on the entity class object and column cluster (specify the column name prefix, if the specified prefix is `test_`, the column name stored in the table will have the prefix `test_`, **Note: the column name prefixes `null` and ` ""`Not the same!**)
+
 # 🥄Instructions
 
 ### Import dependencies
@@ -512,4 +548,5 @@ public class PersonRead {
 
 # Changelog
 
-- 2022/07/29：HBase tool class, version: 0.0.1-SNAPSHOT
+- 2022/07/29: HBase tool class, version: 0.0.1-SNAPSHOT
+- 2022/07/30:  The Hbase tool class allows custom prefixes to obtain Put objects from entity class objects and to obtain entity class objects from scan result sets. Version: 0.0.2-SNAPSHOT

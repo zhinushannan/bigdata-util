@@ -70,16 +70,6 @@ public class HBaseUtils {
     }
 
     /**
-     * 如果表存在，则删除
-     */
-    public static void deleteTaleIfExist(TableName tableName) throws IOException {
-        if (getAdmin().tableExists(tableName)) {
-            getAdmin().disableTable(tableName);
-            getAdmin().deleteTable(tableName);
-        }
-    }
-
-    /**
      * 如果命名空间存在，则删除
      */
     public static void deleteNamespaceIfExist(String namespace) throws IOException {
@@ -92,6 +82,76 @@ public class HBaseUtils {
             getAdmin().deleteNamespace(namespace);
         }
     }
+
+    /**
+     * 如果表存在，则删除
+     */
+    public static void deleteTaleIfExist(TableName tableName) throws IOException {
+        if (getAdmin().tableExists(tableName)) {
+            getAdmin().disableTable(tableName);
+            getAdmin().deleteTable(tableName);
+        }
+    }
+
+    /**
+     * 根据扫描结果Cell得到对象
+     *
+     * @param cls    实体类类型
+     * @param result 扫描结果Cell
+     * @param family 列簇
+     * @return 返回扫描结果Cell对应的对象
+     */
+    public static <T> T getInstance(Class<T> cls, Result result, byte[] family) throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        return getInstance(cls, result, family, "");
+    }
+
+    /**
+     * 根据扫描结果Cell得到对象
+     *
+     * @param cls       实体类类型
+     * @param result    扫描结果Cell
+     * @param family    列簇
+     * @param colPrefix 列名的前缀
+     * @return 返回扫描结果Cell对应的对象
+     */
+    public static <T> T getInstance(Class<T> cls, Result result, byte[] family, String colPrefix) throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+        Map<String, Class<?>> privateFieldClass = FieldClassUtils.getPrivateFieldClass(cls);
+
+        T instance = cls.newInstance();
+
+        Set<Map.Entry<String, Class<?>>> entries = privateFieldClass.entrySet();
+        for (Map.Entry<String, Class<?>> entry : entries) {
+            String fieldName = entry.getKey();
+            Class<?> fieldCls = privateFieldClass.get(fieldName);
+            Object fieldValue = HBaseUtils.getColVal(fieldCls, result, family, Bytes.toBytes(colPrefix + fieldName));
+            getSetMethod(cls, fieldName, fieldCls).invoke(instance, fieldValue);
+        }
+
+        return instance;
+    }
+
+    /**
+     * 根据扫描结果集得到对象列表
+     *
+     * @param cls     实体类类型
+     * @param results 扫描结果集
+     * @param family  列簇
+     * @return 返回扫描结果Cell对应的对象
+     */
+    public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family) throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        return getInstances(cls, results, family, "");
+    }
+
+    public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family, String colPrefix) throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
+        List<T> list = new ArrayList<>();
+
+        for (Result result : results) {
+            list.add(getInstance(cls, result, family, colPrefix));
+        }
+
+        return list;
+    }
+
 
     /**
      * 打印扫描结果
@@ -120,9 +180,11 @@ public class HBaseUtils {
 
     /**
      * 根据数据类型获取对应的转换方法，如传入 int.class ，返回的是 Bytes 类中的 toInt(byte[]) 方法
+     * 由于该方法不需要对外暴露，下个版本方法将设为private
      *
      * @param cls 扫描结果的值的类型
      */
+    @Deprecated
     public static Method getBytesToMethod(Class<?> cls) throws NoSuchMethodException {
         cls = ConvertConst.wrapper2primitive.get(cls) == null ? cls : ConvertConst.wrapper2primitive.get(cls);
         String name = cls.getSimpleName();
@@ -131,7 +193,7 @@ public class HBaseUtils {
     }
 
     /**
-     * 获取hbase读取的值
+     * 根据数据类型、结果集和列簇中的列名获取对应的值。
      *
      * @param cls    转换为byte[]之前的数据类型
      * @param result hbase扫描结果
@@ -143,47 +205,6 @@ public class HBaseUtils {
         return getBytesToMethod(cls).invoke(null, result.getValue(family, col));
     }
 
-    /**
-     * 根据扫描结果Cell得到对象
-     *
-     * @param cls    实体类类型
-     * @param result 扫描结果Cell
-     * @param family 列簇
-     * @return 返回扫描结果Cell对应的对象
-     */
-    public static <T> T getInstance(Class<T> cls, Result result, byte[] family) throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        Map<String, Class<?>> privateFieldClass = FieldClassUtils.getPrivateFieldClass(cls);
-
-        T instance = cls.newInstance();
-
-        Set<Map.Entry<String, Class<?>>> entries = privateFieldClass.entrySet();
-        for (Map.Entry<String, Class<?>> entry : entries) {
-            String fieldName = entry.getKey();
-            Class<?> fieldCls = privateFieldClass.get(fieldName);
-            Object fieldValue = HBaseUtils.getColVal(fieldCls, result, family, Bytes.toBytes(fieldName));
-            getSetMethod(cls, fieldName, fieldCls).invoke(instance, fieldValue);
-        }
-
-        return instance;
-    }
-
-    /**
-     * 根据扫描结果集得到对象列表
-     *
-     * @param cls     实体类类型
-     * @param results 扫描结果集
-     * @param family  列簇
-     * @return 返回扫描结果Cell对应的对象
-     */
-    public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family) throws InvocationTargetException, InstantiationException, IllegalAccessException, NoSuchMethodException {
-        List<T> list = new ArrayList<>();
-
-        for (Result result : results) {
-            list.add(getInstance(cls, result, family));
-        }
-
-        return list;
-    }
 
     /**
      * 根据实体类对象和列簇构建put对象
@@ -191,35 +212,53 @@ public class HBaseUtils {
      * @param row    行键
      * @param family 列簇
      * @param t      实体类对象
+     * @param <T>    实体类对象的类型
+     * @return 返回 Put 对象
      */
     public static <T> Put getPut(byte[] row, byte[] family, T t) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        return getPut(row, family, t, "");
+    }
+
+    /**
+     * 根据实体类对象和列簇构建put对象
+     *
+     * @param row       行键
+     * @param family    列簇
+     * @param t         实体类对象
+     * @param colPrefix 列名前缀
+     * @param <T>       实体类对象的类型
+     * @return 返回 Put 对象
+     */
+    public static <T> Put getPut(byte[] row, byte[] family, T t, String colPrefix) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         Put put = new Put(row);
-        Set<Map.Entry<byte[], Class<?>>> entries = FieldClassUtils.getPrivateFieldClassBytesKey(t.getClass()).entrySet();
-        for (Map.Entry<byte[], Class<?>> entry : entries) {
-            Object invoke = getGetMethod(t.getClass(), Bytes.toString(entry.getKey())).invoke(t);
+        Set<Map.Entry<String, Class<?>>> entries = FieldClassUtils.getPrivateFieldClass(t.getClass()).entrySet();
+        for (Map.Entry<String, Class<?>> entry : entries) {
+            byte[] rowKey = Bytes.toBytes(colPrefix + entry.getKey());
+
+            Object invoke = getGetMethod(t.getClass(), entry.getKey()).invoke(t);
 
             switch (invoke.getClass().getSimpleName().toLowerCase()) {
                 case "short":
-                    put.addColumn(family, entry.getKey(), Bytes.toBytes((short) invoke));
+                    put.addColumn(family, rowKey, Bytes.toBytes((short) invoke));
                     break;
                 case "integer":
                 case "int":
-                    put.addColumn(family, entry.getKey(), Bytes.toBytes((int) invoke));
+                    put.addColumn(family, rowKey, Bytes.toBytes((int) invoke));
                     break;
                 case "long":
-                    put.addColumn(family, entry.getKey(), Bytes.toBytes((long) invoke));
+                    put.addColumn(family, rowKey, Bytes.toBytes((long) invoke));
                     break;
                 case "double":
-                    put.addColumn(family, entry.getKey(), Bytes.toBytes((double) invoke));
+                    put.addColumn(family, rowKey, Bytes.toBytes((double) invoke));
                     break;
                 case "float":
-                    put.addColumn(family, entry.getKey(), Bytes.toBytes((float) invoke));
+                    put.addColumn(family, rowKey, Bytes.toBytes((float) invoke));
                     break;
                 case "boolean":
-                    put.addColumn(family, entry.getKey(), Bytes.toBytes((boolean) invoke));
+                    put.addColumn(family, rowKey, Bytes.toBytes((boolean) invoke));
                     break;
                 case "string":
-                    put.addColumn(family, entry.getKey(), Bytes.toBytes((String) invoke));
+                    put.addColumn(family, rowKey, Bytes.toBytes((String) invoke));
                     break;
             }
         }

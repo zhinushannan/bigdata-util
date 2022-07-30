@@ -6,7 +6,7 @@
 
     <groupId>io.github.zhinushannan</groupId>
     <artifactId>bigdata-util</artifactId>
-    <version>0.0.1-RELEASE</version>
+    <version>0.0.2-RELEASE</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>bigdata util</description>
@@ -24,12 +24,6 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common -->
         <dependency>

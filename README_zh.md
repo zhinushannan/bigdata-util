@@ -1,33 +1,30 @@
 <div align="center">
   <h1>📀bigdata-util</h1>
-  <span>🇬🇧English</span>  <a href="https://github.com/zhinushannan/bigdata-util/blob/main/README_zh.md">🇨🇳简体中文</a>
+  <a href="https://github.com/zhinushannan/bigdata-util/blob/main/README.md">🇬🇧English</a>  <span>🇨🇳简体中文</span>
 </div>
 
+# ✨项目简介
 
+如果你在使用或者学习大数据，该工具框架可以减少您**60%**的代码量，也可以提升一定程度的运行速度。
 
+功能包括：
 
-# ✨Project Description
-
-If you are using or learning big data, this tool framework can reduce your code amount by 60%, and can also improve the running speed to a certain extent.
-
-Features include:
-
-- Hadoop：Not yet written
+- Hadoop：暂未编写
 - HBase：
-  - Acquisition and release of HBase configuration objects, connection objects, and Admin objects
-  - Deletion of namespaces
-  - Deletion of tables
-  - Convert scan results to entity class objects (can be batched)
-  - Entity class object to Put object
-  - 【pending upgrade】
+  - HBase配置对象、连接对象、Admin对象的获取与释放
+  - 命名空间的删除
+  - 表的删除
+  - 扫描结果转实体类对象（可批量）
+  - 实体类对象转Put对象
+  - 【待更新】
 
-> Tips：This tool has provided `hadoop-common-3.3.2`, `hadoop-client-3.3.2`, `hadoop-hdfs-3.3.2`, `hbase-client-2.4.8`, `hbase-server-2.4.8` , `hbase-mapreduce-2.4.8` dependencies, to meet the basic development needs, you do not need to add manually.
+> 提示：本工具已提供`hadoop-common-3.3.2`、`hadoop-client-3.3.2`、`hadoop-hdfs-3.3.2`、`hbase-client-2.4.8`、`hbase-server-2.4.8`、`hbase-mapreduce-2.4.8`依赖，满足基本开发需求，可以不需要手动添加。
 
-# 🥄Instructions
+# 🥄使用方法
 
-### Import dependencies
+### 导入依赖
 
-You need to add the following dependencies to the `pom.xml` file:
+您需要在`pom.xml`文件中添加如下依赖：
 
 ```xml
     <dependency>
@@ -37,9 +34,9 @@ You need to add the following dependencies to the `pom.xml` file:
     </dependency>
 ```
 
-### Pre-preparation
+### 前置准备
 
-All the following demos take the following entity class as an example:
+如下所有Demo以如下实体类为例：
 
 ```java
 package org.example.hbase.writable;
@@ -99,11 +96,11 @@ public class PersonWritable implements Writable {
 }
 ```
 
-At the same time, you need to copy your HBase configuration file `hbase.site.xml` to the `src/main/resources` directory.
+同时，您需要将您的HBase配置文件`hbase.site.xml`拷贝至`src/main/resources`目录下。
 
-### HBase create namespace
+### HBase创建命名空间
 
-#### Code that does not use the tool framework
+#### 不使用该工具框架的代码
 
 ```java
 import org.apache.hadoop.conf.Configuration;
@@ -167,7 +164,7 @@ public class CreateNamespace {
 }
 ```
 
-#### Code using the tool framework
+#### 使用该工具框架的代码
 
 ```java
 import io.github.zhinushannan.util.hbase.HBaseUtils;
@@ -196,9 +193,9 @@ public class CreateNamespace {
 }
 ```
 
-### HBase create table
+### HBase创建表
 
-#### Code that does not use the tool framework
+#### 不实用该框架的代码
 
 ```java
 import org.apache.hadoop.conf.Configuration;
@@ -250,7 +247,7 @@ public class CreateTable {
 }
 ```
 
-#### Code using the tool framework
+#### 使用该框架的代码
 
 ```java
 import io.github.zhinushannan.util.hbase.HBaseUtils;
@@ -278,9 +275,9 @@ public class CreateTable {
 }
 ```
 
-### Store data in HBase
+### HBase存入数据
 
-#### Code that does not use the tool framework
+#### 不实用该工具框架的代码
 
 ```java
 import org.apache.hadoop.conf.Configuration;
@@ -347,12 +344,12 @@ public class PersonPut {
 }
 ```
 
-#### Code using the tool framework
+#### 使用该工具框架的代码
 
-illustrate：
+说明：
 
-1. `HBaseUtils.getPut()The parameters that need to be passed are: the byte array of the row key, the byte array of the column family, and the object to be stored.
-2. The column name stored in the table is the attribute name of the class.
+1. `HBaseUtils.getPut()`需要传递的参数分别为：行键的byte数组、列簇的byte数组、需要存入的对象。
+2. 存入表中的列名为类的属性名。
 
 ```java
 import io.github.zhinushannan.util.hbase.HBaseUtils;
@@ -398,11 +395,11 @@ public class PersonPut {
 }
 ```
 
-### HBase read data
+### HBase读数据
 
-**Note: Please execute the following example code after executing the above code for storing data. **
+**注意：请在执行完上述存入数据的代码后执行如下实例代码。**
 
-#### Code that does not use the tool framework
+#### 不使用该工具框架的代码
 
 ```java
 import io.github.zhinushannan.util.hbase.HBaseUtils;
@@ -452,15 +449,15 @@ public class PersonRead {
 }
 ```
 
-#### Code using the tool framework
+#### 使用该工具框架的代码
 
-The framework provides three output modes:
+本框架提供三种输出模式：
 
-- `HBaseUtils.getInstance()`：The parameters that need to be passed are the class of the entity class, the single result set Cell, and the byte array of the column family. This method returns the object corresponding to the Cell.
-- `HBaseUtils.getInstances()`：The parameters that need to be passed are the class of the entity class, the scan result set, and the byte array of the column family. This method returns a list of all objects corresponding to the result set.
-- `HBaseUtils.show()`：The parameters that need to be passed are the class of the entity class, the scan result set, and the byte array of the column family. This method has no return value, and directly calls the `toString()` method of the object to output.
+- `HBaseUtils.getInstance()`：需要传递的参数分别为实体类的class、单个结果集Cell、列簇的byte数组。该方法返回的是该Cell对应的对象。
+- `HBaseUtils.getInstances()`：需要传递的参数分别为实体类的class、扫描结果集、列簇的byte数组。该方法返回的是该结果集对应的所有对象的列表。
+- `HBaseUtils.show()`：需要传递的参数分别为实体类的class、扫描结果集、列簇的byte数组。该方法没有返回值，直接调用对象的`toString()`方法进行输出。
 
-The first two formats provide more operation space and can process the objects corresponding to the returned result set.
+其中前两种格式提供了更多的操作空间，可以对返回的结果集对应的对象进行处理。
 
 ```java
 import io.github.zhinushannan.util.hbase.HBaseUtils;
@@ -481,19 +478,19 @@ public class PersonRead {
 
             byte[] family = Bytes.toBytes("demo");
 
-            // Method 1: Traverse scan, get each object in turn and output
+            // 方法一：遍历scan，依次获取每一个对象并输出
             ResultScanner results = demo.getScanner(scan);
             for (Result result : results) {
                 PersonWritable instance = HBaseUtils.getInstance(PersonWritable.class, result, family);
                 System.out.println(instance);
             }
 
-            // Method 2: Directly obtain all objects in the result set and output them
+            // 方法二：直接获取结果集中所有对象并进行输出
             results = demo.getScanner(scan);
             List<PersonWritable> instances = HBaseUtils.getInstances(PersonWritable.class, results, family);
             System.out.println(instances);
 
-            // Method 3: Direct output
+            // 方法三：直接输出
             results = demo.getScanner(scan);
             HBaseUtils.show(PersonWritable.class, results, family);
 
@@ -510,6 +507,6 @@ public class PersonRead {
 
 
 
-# Changelog
+# 更新日志
 
-- 2022/07/29：HBase tool class, version: 0.0.1-SNAPSHOT
+- 2022/07/29：HBase工具类，版本：0.0.1-SNAPSHOT

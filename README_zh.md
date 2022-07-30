@@ -68,7 +68,7 @@
     <dependency>
       <groupId>io.github.zhinushannan</groupId>
       <artifactId>bigdata-util</artifactId>
-      <version>0.0.1-RELEASE</version>
+      <version>0.0.2-RELEASE</version>
     </dependency>
 ```
 

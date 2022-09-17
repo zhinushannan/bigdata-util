@@ -45,18 +45,18 @@
 
   - `public static Object getColVal(Class<?> cls, Result result, byte[] family, byte[] col)`：根据数据类型、结果集和列簇中的列名获取对应的值。
 
-  - `public static <T> T getInstance(Class<T> cls, Result result, byte[] family)`：根据扫描结果Cell得到对象（无列名前缀）
+  - `public static <T> T getInstance(Result result, byte[] family, Class<T> cls)`：根据扫描结果Cell得到对象（无列名前缀）
 
-  - `public static <T> T getInstance(Class<T> cls, Result result, byte[] family, String colPrefix)`：根据扫描结果Cell得到对象（指定列名前缀，如指定前缀为`test_`，则从表中获取数据转为实体类的过程中将列名的前缀`test_`移除，**注意：列名前缀`null`和`""`不相同！**）
+  - `public static <T> T getInstance(Result result, byte[] family, String colPrefix, Class<T> cls)`：根据扫描结果Cell得到对象（指定列名前缀，如指定前缀为`test_`，则从表中获取数据转为实体类的过程中将列名的前缀`test_`移除，**注意：列名前缀`null`和`""`不相同！**）
 
-  - `public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family)`：根据扫描结果集ResultScanner获得对象列表（无列名前缀）
+  - `public static <T> List<T> getInstances(ResultScanner results, byte[] family, Class<T> cls)`：根据扫描结果集ResultScanner获得对象列表（无列名前缀）
 
-  - `public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family, String colPrefix)`：根据扫描结果集ResultScanner获得对象列表（排除指定列名前缀，如指定前缀为`test_`，则从表中获取数据转为实体类的过程中将列名的前缀`test_`移除，**注意：列名前缀`null`和`""`不相同！**）
+  - `public static <T> List<T> getInstances(ResultScanner results, byte[] family, String colPrefix, Class<T> cls)`：根据扫描结果集ResultScanner获得对象列表（排除指定列名前缀，如指定前缀为`test_`，则从表中获取数据转为实体类的过程中将列名的前缀`test_`移除，**注意：列名前缀`null`和`""`不相同！**）
 
 - `Put`对象的获取
 
-  - `public static <T> Put getPut(byte[] row, byte[] family, T t)`：根据实体类对象和列簇构建put对象（无列名前缀）
-  - `public static <T> Put getPut(byte[] row, byte[] family, T t, String colPrefix)`：根据实体类对象和列簇构建put对象（指定列名前缀，如指定前缀为`test_`，存入表中的列名便拥有前缀`test_`，**注意：列名前缀`null`和`""`不相同！**）
+  - `public static <T> Put getPut(byte[] family, byte[] row, T t)`：根据实体类对象和列簇构建put对象（无列名前缀）
+  - `public static <T> Put getPut(byte[] family, byte[] row, T t, String colPrefix)`：根据实体类对象和列簇构建put对象（指定列名前缀，如指定前缀为`test_`，存入表中的列名便拥有前缀`test_`，**注意：列名前缀`null`和`""`不相同！**）
 
 # 🥄使用方法
 
@@ -65,11 +65,11 @@
 您需要在`pom.xml`文件中添加如下依赖：
 
 ```xml
-    <dependency>
-      <groupId>io.github.zhinushannan</groupId>
-      <artifactId>bigdata-util</artifactId>
-      <version>0.0.2-RELEASE</version>
-    </dependency>
+<dependency>
+  <groupId>io.github.zhinushannan</groupId>
+  <artifactId>hbase-tools</artifactId>
+  <version>0.0.4-RELEASE</version>
+</dependency>
 ```
 
 ### 前置准备

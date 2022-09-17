@@ -44,15 +44,15 @@ Features include:
 
   - ~~`public static Method getBytesToMethod(Class<?> cls)`~~：Obtain the corresponding conversion method according to the data type, such as passing in `int.class`, and returning the `Bytes.toInt(byte[])` method (because this method does not need to be exposed, the next version will be set to private)
 
-  - `public static Object getColVal(Class<?> cls, Result result, byte[] family, byte[] col)`：Get the corresponding value based on the data type, result set, and column name in the column cluster.
+  - `public static Object getColVal(Result result, byte[] family, byte[] col, Class<?> cls)`：Get the corresponding value based on the data type, result set, and column name in the column cluster.
 
-  - `public static <T> T getInstance(Class<T> cls, Result result, byte[] family)`：Get the object according to the scan result Cell (no column name prefix)
+  - `public static <T> T getInstance(Result result, byte[] family, Class<T> cls)`：Get the object according to the scan result Cell (no column name prefix)
 
-  - `public static <T> T getInstance(Class<T> cls, Result result, byte[] family, String colPrefix)`：Obtain the object according to the scan result Cell (specify the prefix of the column name, if the specified prefix is `test_`, the prefix `test_` of the column name will be removed in the process of obtaining the data from the table and converting it to the entity class, **Note: the column name The prefix `null` and `""` are not the same!**)
+  - `public static <T> T getInstance(Result result, byte[] family, String colPrefix, Class<T> cls)`：Obtain the object according to the scan result Cell (specify the prefix of the column name, if the specified prefix is `test_`, the prefix `test_` of the column name will be removed in the process of obtaining the data from the table and converting it to the entity class, **Note: the column name The prefix `null` and `""` are not the same!**)
 
-  - `public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family)`：Obtain a list of objects based on the scan result set ResultScanner (without column name prefix)
+  - `public static <T> List<T> getInstances(ResultScanner results, byte[] family, Class<T> cls)`：Obtain a list of objects based on the scan result set ResultScanner (without column name prefix)
 
-  - `public static <T> List<T> getInstances(Class<T> cls, ResultScanner results, byte[] family, String colPrefix)`：Obtain a list of objects based on the scan result set ResultScanner (excluding the specified column name prefix, if the specified prefix is `test_`, the column name prefix `test_` will be removed in the process of obtaining data from the table and converting it to an entity class, **Note : column name prefixes `null` and `""` are not the same!**)
+  - `public static <T> List<T> getInstances(ResultScanner results, byte[] family, String colPrefix, Class<T> cls)`：Obtain a list of objects based on the scan result set ResultScanner (excluding the specified column name prefix, if the specified prefix is `test_`, the column name prefix `test_` will be removed in the process of obtaining data from the table and converting it to an entity class, **Note : column name prefixes `null` and `""` are not the same!**)
 
 - Get the `Put` object
 
@@ -66,11 +66,11 @@ Features include:
 You need to add the following dependencies to the `pom.xml` file:
 
 ```xml
-    <dependency>
-      <groupId>io.github.zhinushannan</groupId>
-      <artifactId>bigdata-util</artifactId>
-      <version>0.0.2-RELEASE</version>
-    </dependency>
+<dependency>
+  <groupId>io.github.zhinushannan</groupId>
+  <artifactId>hbase-tools</artifactId>
+  <version>0.0.4-RELEASE</version>
+</dependency>
 ```
 
 ### Pre-preparation
